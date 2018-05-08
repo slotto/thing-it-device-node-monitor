@@ -1,0 +1,25 @@
+{
+  "name": "thing-it-device-node-monitor",
+  "version": "0.0.1",
+  "description": "[thing-it-node] Device Plugin for monitoring the gateway system",
+  "authors": "Julian Seibert",
+  "license": "(MIT OR EPL)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/slotto/thing-it-device-node-monitor"
+  },
+  "keywords": [
+    "IoT",
+    "thing-it"
+  ],
+  "scripts": {
+    "postversion": "git push && git push --tags && npm publish"
+  },
+  "dependencies": {
+    "network": "^0.4.1",
+    "wireless-tools": "^0.19.0"
+  },
+  "devDependencies": {
+    "thing-it-test": "0.0.13"
+  }
+}
