@@ -48,13 +48,13 @@ module.exports = {
             }
         }],
         configuration: [{
-            label: "Board Type",
-            id: "boardType",
+            label: "Refresh Interval",
+            id: "refreshInterval",
             type: {
-                family: "reference",
-                id: "boardType"
+                id: "integer"
             },
-            defaultValue: "RASPBERRY"
+            defaultValue: "1",
+            unit: "s"
         }]
     },
 
@@ -64,12 +64,12 @@ module.exports = {
     }
 };
 
-var q = require('q');
-var os = require('os');
-var cpuinfo = require('proc-cpuinfo')();
+let q = require('q');
+let os = require('os');
+let cpuinfo = require('proc-cpuinfo')();
 
 //TODO COMPLETE from https://elinux.org/RPi_HardwareHistory
-var raspberryRevision = [
+let raspberryRevision = [
     {revision: "Beta", model: "B (Beta)"},
     {revision: "0002", model: "B (Beta)"},
     {revision: "0003", model: "B (Beta)"},
@@ -108,7 +108,7 @@ function NodeMonitor() {
      */
 
     NodeMonitor.prototype.start = function () {
-        var deferred = q.defer();
+        let deferred = q.defer();
 
         this.logLevel = 'debug';
 
@@ -117,7 +117,6 @@ function NodeMonitor() {
 
         } else {
 
-            //Determinate Raspberry Model
             if (cpuinfo.Revision) {
                 try {
                     this.state.raspberryModel = raspberryRevision.find(function (obj) {
@@ -154,7 +153,7 @@ function NodeMonitor() {
                 this.logDebug("Used CPU (%): " + this.state.usedCPU);
 
                 this.publishStateChange();
-            }.bind(this), 1000); //TODO configurable
+            }.bind(this), this.configuration.refreshInterval * 1000);
 
             deferred.resolve();
         }
