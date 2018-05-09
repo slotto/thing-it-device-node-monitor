@@ -49,8 +49,14 @@ module.exports = {
                 id: "integer"
             }
         }, {
-            id: "localIp",
+            id: "localIP",
             label: "Local IP",
+            type: {
+                id: "string"
+            }
+        }, {
+            id: "publicIP",
+            label: "Public IP",
             type: {
                 id: "string"
             }
@@ -91,54 +97,49 @@ function NetworkStats() {
 
         var iwconfig = require('wireless-tools/iwconfig');
         var network = require('network');
-        var os = require('os');
-
 
         try {
             if (!this.isSimulated()) {
 
-                try {
+                // this.state.hostname = os.hostname();
+                // this.logDebug("Hostname: " + this.state.hostname);
+
+                //this.state.hostname = "test";
+
+                setInterval(function () {
+
+                    network.get_public_ip(function (err, ip) {
+                        this.state.publicIP = (err || ip);
+                        this.logDebug("Public IP: " + this.state.publicIP);
+                    }.bind(this));
+
+                    network.get_private_ip(function (err, ip) {
+                        this.state.localIP = (err || ip);
+                        this.logDebug("Local IP: " + this.state.localIP);
+                    }.bind(this));
+
+                }.bind(this), 1000); //todo increase
 
 
-                    this.state.hostname = os.hostname();
+                setInterval(function () {
 
-                    setInterval(function () {
+                    iwconfig.status('wlan0', function (err, wifi) { //Todo no hardcoded interface
+                        if (err) {
+                            this.wifiActive = false;
+                            this.logDebug("No WLAN interface found")
+                        } else {
 
-                        iwconfig.status('wlan0', function (err, status) {
-                            console.log(status);
-
-                            // [ { interface: 'wlan0',
-                            //     access_point: 'f0:9f:c2:2a:0e:43',
-                            //     frequency: 2.462,
-                            //     ieee: '802.11',
-                            //     mode: 'managed',
-                            //     quality: 68,
-                            //     signal: -42,
-                            //     ssid: 'StellasNet' } ]
-
-
-                        });
-
-
-                        network.get_private_ip(function (err, ip) {
-                            if (err) {
-                                this.logDebug("Faild to get local IP address Error: " + err);
-                            } else {
-                                //this.state.localIp = ip;
-                                //this.publishStateChange();
-                                //this.logDebug("Local IP: " + ip);
-                                console.log(ip);
-                            }
-                        });
-
-
-                    }.bind(this), 1000);
-
-
-                } catch (x) {
-
-                    console.log(x);
-                }
+                            this.state.wifiActive = true;
+                            this.state.wifiSSID = wifi.ssid;
+                            this.state.wifiApMAC = wifi.access_point;
+                            this.state.wifiIEEE = wifi.ieee;
+                            this.state.wifiFrequency = wifi.frequency;
+                            this.state.wifiSignalQuality = wifi.quality;
+                        }
+                        console.log("wifi" , this.state);
+                        this.publishStateChange();
+                    }.bind(this));
+                }.bind(this), 1000);
 
 
             }
@@ -152,4 +153,23 @@ function NetworkStats() {
     NetworkStats.prototype.getState = function () {
         return this.state;
     };
+
+    /**
+     *
+     */
+    NetworkStats.prototype.setState = function () {
+    };
+
+    /**
+     *
+     */
+
+    NetworkStats.prototype.stop = function () {
+
+
+    };
+
+    /**
+     *
+     */
 };

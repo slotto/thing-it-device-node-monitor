@@ -166,7 +166,7 @@ function NodeMonitor() {
      *
      */
     NodeMonitor.prototype.getState = function () {
-        return {};
+        return this.state;
     };
 
     /**
