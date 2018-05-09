@@ -28,13 +28,19 @@ module.exports = {
             type: {
                 id: "string"
             }
-        },{
+        }, {
+            id: "usedCPU",
+            label: "Used CPU (%)",
+            type: {
+                id: "string"
+            }
+        }, {
             id: "totalMemory",
             label: "Total memory",
             type: {
                 id: "string"
             }
-        },{
+        }, {
             id: "usedMemory",
             label: "Used memory",
             type: {
@@ -59,9 +65,7 @@ module.exports = {
 };
 
 var q = require('q');
-var monitor = require("os-monitor");
 var os = require('os');
-const si = require('systeminformation');
 var cpuinfo = require('proc-cpuinfo')();
 
 //TODO COMPLETE from https://elinux.org/RPi_HardwareHistory
@@ -110,8 +114,8 @@ function NodeMonitor() {
 
         if (this.isSimulated()) {
             deferred.resolve();
-        } else {
 
+        } else {
 
             //Determinate Raspberry Model
             if (cpuinfo.Revision) {
@@ -119,39 +123,38 @@ function NodeMonitor() {
                     this.state.raspberryModel = raspberryRevision.find(function (obj) {
                         return obj.revision.includes(cpuinfo.Revision);
                     }).model;
+
                     this.logDebug("Raspberry Model: " + this.state.raspberryModel);
                 } catch (x) {
-                    this.state.raspberryModel = 'Not defined in device Plugin';
+                    this.state.raspberryModel = 'Not defined yet. Plugin Outdated?';
                     this.logDebug("Raspberry Model: " + this.state.raspberryModel);
                 }
             } else {
                 this.state.raspberryModel = "-"
             }
 
-            this.state.totalMemory = os.totalmem();
+            this.state.totalMemory = formatBytes(os.totalmem(), 3);
             this.logDebug("Total Memory: " + this.state.totalMemory);
 
 
             setInterval(function () {
-
                 this.state.hostUpTime = getTimeString(os.uptime());
                 this.logDebug("Host Uptime: " + this.state.hostUpTime);
 
                 this.state.processUpTime = getTimeString(Math.floor(process.uptime()));
                 this.logDebug("Process Uptime: " + this.state.processUpTime);
 
+                this.state.usedMemory = formatBytes(os.totalmem() - os.freemem());
+                this.logDebug("Memory: " + this.state.usedMemory + "/" + this.state.totalMemory);
+
+                getCPUUsage(function (v) {
+                    let tmp = v * 100;
+                    this.state.usedCPU = tmp.toFixed();
+                }.bind(this));
+                this.logDebug("Used CPU (%): " + this.state.usedCPU);
+
                 this.publishStateChange();
-
-                osutil.cpuUsage(function (v) {
-                    console.log('CPU Usage (%): ' + v);
-                });
-
-                osutil.cpuFree(function (v) {
-                    console.log('CPU Free:' + v);
-                });
-
-            }.bind(this), 1000);
-
+            }.bind(this), 1000); //TODO configurable
 
             deferred.resolve();
         }
@@ -180,9 +183,6 @@ function NodeMonitor() {
     NodeMonitor.prototype.stop = function () {
 
 
-        //this.board.io.reset()
-        //TODO implement after adding to firmata -> https://github.com/rwaldron/johnny-five/issues/617
-
     };
 
     /**
@@ -190,10 +190,69 @@ function NodeMonitor() {
      */
 }
 
+function getCPUUsage(callback, free) {
 
-var getTimeString = function (s) {
+    let stats1 = getCPUInfo();
+    let startIdle = stats1.idle;
+    let startTotal = stats1.total;
+
+    setTimeout(function () {
+        let stats2 = getCPUInfo();
+        let endIdle = stats2.idle;
+        let endTotal = stats2.total;
+
+        let idle = endIdle - startIdle;
+        let total = endTotal - startTotal;
+        let perc = idle / total;
+
+        if (free === true)
+            callback(perc);
+        else
+            callback((1 - perc));
+
+    }, 1000);
+}
+
+function getCPUInfo(callback) {
+    let cpus = os.cpus();
+
+    let user = 0;
+    let nice = 0;
+    let sys = 0;
+    let idle = 0;
+    let irq = 0;
+    let total = 0;
+
+    for (let cpu in cpus) {
+        if (!cpus.hasOwnProperty(cpu)) continue;
+        user += cpus[cpu].times.user;
+        nice += cpus[cpu].times.nice;
+        sys += cpus[cpu].times.sys;
+        irq += cpus[cpu].times.irq;
+        idle += cpus[cpu].times.idle;
+    }
+
+    total = user + nice + sys + idle + irq;
+
+    return {
+        'idle': idle,
+        'total': total
+    };
+}
+
+function formatBytes(bytes, decimals) {
+    if (bytes === 0) return '0 Bytes';
+    let k = 1024,
+        dm = decimals || 2,
+        sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+        i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+
+function getTimeString(s) {
     let delim = " ";
-    let days = Math.floor(s / 60 / 60 / 24); // DAYS
+    let days = Math.floor(s / 60 / 60 / 24);
     let hours = Math.floor(s / 60 / 60) % 24;
     let minutes = Math.floor(s / 60) % 60;
     let seconds = s % 60;
@@ -201,4 +260,4 @@ var getTimeString = function (s) {
     minutes = minutes < 10 ? '0' + minutes : minutes;
     seconds = seconds < 10 ? '0' + seconds : seconds;
     return days + 'd' + delim + hours + 'h' + delim + minutes + 'm' + delim + seconds + 's';
-};
+}
