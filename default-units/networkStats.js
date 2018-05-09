@@ -7,10 +7,46 @@ module.exports = {
         deviceTypes: ["node-monitor/nodeMonitor"],
         events: [],
         state: [{
-            id: "currentConnectionName",
-            label: "Current connection SSID",
+            id: "ethernetActive",
+            label: "Ethernet active",
+            type: {
+                id: "boolean"
+            }
+        }, {
+            id: "wifiActive",
+            label: "Wifi active",
+            type: {
+                id: "boolean"
+            }
+        }, {
+            id: "wifiSSID",
+            label: "Wifi SSID",
             type: {
                 id: "string"
+            }
+        }, {
+            id: "wifiApMAC",
+            label: "Wifi access point MAC",
+            type: {
+                id: "string"
+            }
+        }, {
+            id: "wifiIEEE",
+            label: "Wifi IEEE",
+            type: {
+                id: "string"
+            }
+        }, {
+            id: "wifiFrequency",
+            label: "Wifi frequency",
+            type: {
+                id: "string"
+            }
+        }, {
+            id: "wifiSignalQuality",
+            label: "Wifi signal quality",
+            type: {
+                id: "integer"
             }
         }, {
             id: "localIp",
@@ -18,8 +54,23 @@ module.exports = {
             type: {
                 id: "string"
             }
+        }, {
+            id: "hostname",
+            label: "Hostname",
+            type: {
+                id: "string"
+            }
         }],
-        configuration: []
+        configuration: [{
+            id: "refreshInterval",
+            label: "Refresh Interval",
+            type: {
+                id: "integer"
+            },
+            defaultValue: 10,
+            unit: "sec"
+        }
+        ]
     },
     create: function () {
         return new NetworkStats();
@@ -40,6 +91,7 @@ function NetworkStats() {
 
         var iwconfig = require('wireless-tools/iwconfig');
         var network = require('network');
+        var os = require('os');
 
 
         try {
@@ -47,11 +99,27 @@ function NetworkStats() {
 
                 try {
 
+                    //TODO
+                    console.log(os.hostname());
+
+
                     setInterval(function () {
 
-                        iwconfig.status(function (err, status) {
+                        iwconfig.status('wlan0', function (err, status) {
                             console.log(status);
-                        }.bind(this));
+
+                            // [ { interface: 'wlan0',
+                            //     access_point: 'f0:9f:c2:2a:0e:43',
+                            //     frequency: 2.462,
+                            //     ieee: '802.11',
+                            //     mode: 'managed',
+                            //     quality: 68,
+                            //     signal: -42,
+                            //     ssid: 'StellasNet' } ]
+
+
+                        });
+
 
                         network.get_private_ip(function (err, ip) {
                             if (err) {
@@ -60,9 +128,9 @@ function NetworkStats() {
                                 //this.state.localIp = ip;
                                 //this.publishStateChange();
                                 //this.logDebug("Local IP: " + ip);
-                            console.log(ip);
+                                console.log(ip);
                             }
-                        }.bind(this));
+                        });
 
 
                     }.bind(this), 1000);

@@ -1,7 +1,7 @@
 {
   "name": "thing-it-device-node-monitor",
-  "version": "0.0.1",
-  "description": "[thing-it-node] Device Plugin for monitoring the gateway system",
+  "version": "0.0.0",
+  "description": "[thing-it-node] Device Plugin for monitoring the gateway host system",
   "authors": "Julian Seibert",
   "license": "(MIT OR EPL)",
   "repository": {
@@ -17,7 +17,10 @@
   },
   "dependencies": {
     "network": "^0.4.1",
-    "wireless-tools": "^0.19.0"
+    "wireless-tools": "^0.19.0",
+    "os-monitor": "^1.0.6",
+    "os-utils": "^0.0.14",
+    "proc-cpuinfo":"^1.0.0"
   },
   "devDependencies": {
     "thing-it-test": "0.0.13"
