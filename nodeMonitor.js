@@ -17,14 +17,26 @@ module.exports = {
                 id: "string"
             }
         }, {
-            id: "HostUpTime",
+            id: "hostUpTime",
             label: "Host uptime",
             type: {
                 id: "string"
             }
         }, {
-            id: "ProcessUpTime",
+            id: "processUpTime",
             label: "Process uptime",
+            type: {
+                id: "string"
+            }
+        },{
+            id: "totalMemory",
+            label: "Total memory",
+            type: {
+                id: "string"
+            }
+        },{
+            id: "usedMemory",
+            label: "Used memory",
             type: {
                 id: "string"
             }
@@ -49,7 +61,6 @@ module.exports = {
 var q = require('q');
 var monitor = require("os-monitor");
 var os = require('os');
-var osutil = require('os-utils');
 const si = require('systeminformation');
 var cpuinfo = require('proc-cpuinfo')();
 
@@ -117,19 +128,19 @@ function NodeMonitor() {
                 this.state.raspberryModel = "-"
             }
 
+            this.state.totalMemory = os.totalmem();
+            this.logDebug("Total Memory: " + this.state.totalMemory);
+
 
             setInterval(function () {
+
                 this.state.hostUpTime = getTimeString(os.uptime());
                 this.logDebug("Host Uptime: " + this.state.hostUpTime);
 
                 this.state.processUpTime = getTimeString(Math.floor(process.uptime()));
                 this.logDebug("Process Uptime: " + this.state.processUpTime);
+
                 this.publishStateChange();
-
-
-                console.log("Total Memory: " + osutil.totalmem());
-                console.log("Free memory: " + osutil.freememPercentage());
-
 
                 osutil.cpuUsage(function (v) {
                     console.log('CPU Usage (%): ' + v);
@@ -139,8 +150,7 @@ function NodeMonitor() {
                     console.log('CPU Free:' + v);
                 });
 
-
-            }.bind(this), 5000);
+            }.bind(this), 1000);
 
 
             deferred.resolve();

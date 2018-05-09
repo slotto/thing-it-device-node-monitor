@@ -99,9 +99,8 @@ function NetworkStats() {
 
                 try {
 
-                    //TODO
-                    console.log(os.hostname());
 
+                    this.state.hostname = os.hostname();
 
                     setInterval(function () {
 
