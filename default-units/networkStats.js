@@ -81,7 +81,7 @@ module.exports = {
             unit: "ms"
         }],
         configuration: [{
-            id: "refreshInterval", //TODO Welcher?
+            id: "wifiRefreshInterval",
             label: "Refresh Interval",
             type: {
                 id: "integer"
@@ -134,6 +134,7 @@ function NetworkStats() {
         this.state = {};
 
         let iwconfig = require('wireless-tools/iwconfig');
+        let ifconfig = require('wireless-tools/ifconfig');
         let network = require('network');
         let os = require('os');
         let PingMonitor = require('ping-monitor');
@@ -143,6 +144,10 @@ function NetworkStats() {
 
                 this.state.hostname = os.hostname();
                 this.logDebug("Hostname: " + this.state.hostname);
+
+                // ifconfig.status(function (err, status) {
+                //     console.log(status);
+                // });
 
                 if (this.configuration.enablePing) {
                     this.pingMonitor = new PingMonitor({
@@ -169,7 +174,7 @@ function NetworkStats() {
 
                     // this event is required to be handled in all Node-Monitor instances
                     this.pingMonitor.on('error', function (res) {
-                        this.logDebug('Oh Snap!! An unexpected error occured trying to load ' + res.website + '!');
+                        this.logDebug('Oh Snap!! An unexpected error occured trying to load ' + res.website + '!'); //TODO RENAME
                         this.pingMonitor.stop();
                         this.publishStateChange()
                         //TODO RESTART INSTANCE?
@@ -192,14 +197,21 @@ function NetworkStats() {
                         this.logDebug("Local IP: " + this.state.localIP);
                     }.bind(this));
 
-                }.bind(this), 1000); //todo increase
+                }.bind(this), 1000 * 60); //todo increase
 
 
                 setInterval(function () {
                     iwconfig.status('wlan0', function (err, wifi) { //Todo no hardcoded interface
                         if (err) {
                             this.wifiActive = false;
-                            this.logDebug("No WLAN interface found")
+                            this.state.wifiActive = true;
+                            this.state.wifiSSID = "-";
+                            this.state.wifiApMAC = "-";
+                            this.state.wifiIEEE = "-";
+                            this.state.wifiFrequency = "-";
+                            this.state.wifiSignalQuality = "-";
+                            this.logDebug("wlan0 interface not available")
+
                         } else {
 
                             this.state.wifiActive = true;
@@ -219,7 +231,7 @@ function NetworkStats() {
 
                         this.publishStateChange();
                     }.bind(this));
-                }.bind(this), 1000);
+                }.bind(this), this.configuration.wifiRefreshInterval * 1000);
 
 
             }
