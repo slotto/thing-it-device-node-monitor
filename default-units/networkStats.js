@@ -95,6 +95,8 @@ function NetworkStats() {
 
         this.logLevel = 'debug';
 
+        this.state = {};
+
         let iwconfig = require('wireless-tools/iwconfig');
         let network = require('network');
         let os = require('os');
