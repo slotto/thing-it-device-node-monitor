@@ -95,24 +95,21 @@ function NetworkStats() {
 
         this.logLevel = 'debug';
 
-        var iwconfig = require('wireless-tools/iwconfig');
-        var network = require('network');
+        let iwconfig = require('wireless-tools/iwconfig');
+        let network = require('network');
+        let os = require('os');
 
         try {
             if (!this.isSimulated()) {
 
-                // this.state.hostname = os.hostname();
-                // this.logDebug("Hostname: " + this.state.hostname);
-
-                //this.state.hostname = "test";
+                this.state.hostname = os.hostname();
+                this.logDebug("Hostname: " + this.state.hostname);
 
                 setInterval(function () {
-
                     network.get_public_ip(function (err, ip) {
                         this.state.publicIP = (err || ip);
                         this.logDebug("Public IP: " + this.state.publicIP);
                     }.bind(this));
-
                     network.get_private_ip(function (err, ip) {
                         this.state.localIP = (err || ip);
                         this.logDebug("Local IP: " + this.state.localIP);
@@ -135,8 +132,15 @@ function NetworkStats() {
                             this.state.wifiIEEE = wifi.ieee;
                             this.state.wifiFrequency = wifi.frequency;
                             this.state.wifiSignalQuality = wifi.quality;
+
+                            this.logDebug("WIFI Active: " + this.state.wifiActive);
+                            this.logDebug("WIFI SSID: " + this.state.wifiSSID);
+                            this.logDebug("WIFI AP MAC: " + this.state.wifiApMAC);
+                            this.logDebug("WIFI IEEE: " + this.state.wifiIEEE);
+                            this.logDebug("WIFI Frequency: " + this.state.wifiFrequency);
+                            this.logDebug("WIFI Signal Quality: " + this.state.wifiSignalQuality);
                         }
-                        console.log("wifi" , this.state);
+
                         this.publishStateChange();
                     }.bind(this));
                 }.bind(this), 1000);
